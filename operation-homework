@@ -1,0 +1,286 @@
+作业
+01-------------------------------------------------------------------
+
+1 简述常见Web服务器软件有哪些
+
+参考答案
+
+Apache、 Nginx、 Lighttpd 、Tomcat、 IBM WebSphere、IIS。
+2 使用Nginx部署基于域名的虚拟主机如何修改配置文件
+
+参考答案
+
+    [root@nginx ~]# vim /usr/local/nginx/nginx.conf
+    .. ..
+    server {
+            listen       80;                          //端口
+            server_name  web1.plj.com;               //域名
+            location / {
+                  root   /web1;                        //网页根路径
+                  index  index.html;                 //定义首页文档
+              }
+    }
+        server {
+            listen       80;
+            server_name  web2.plj.com;
+            location / {
+                  root   /web2;
+                  index  index.html; 
+              }
+    }
+    .. ..
+
+3 对网站进行SSL加密，如何生成私钥与证书
+
+参考答案
+
+    [root@nginx ~]# openssl genrsa -out cert.key 2048                    //生成私钥
+[root@nginx ~]# openssl req -new -x509 -key test.pem -out 
+cert.pem    //生成证书
+
+
+
+02---------------------------------------------------------------
+
+1 简述什么是LNMP
+
+参考答案
+
+LNMP是网站运行平台。
+
+    L：操作系统（Linux）
+    N：网站服务软件（Nginx）
+    M：数据库服务软件（MariaDB）
+    P：网站开发语言（PHP、perl、python）
+
+2 部署LNMP时，如何修改Nginx配置文件
+
+参考答案
+
+    [root@nginx ~]# vim /usr/local/nginx/nginx.conf
+    .. ..
+    location / {
+                root   html;
+                index  index.php  index.html   index.htm;
+            }
+     location  ~  \.php$  {
+                root           html;
+                fastcgi_pass   127.0.0.1:9000;
+                fastcgi_index  index.php;
+               # fastcgi_param   SCRIPT_FILENAME  /scripts$fastcgi_script_name;
+                include        fastcgi_conf;
+            }
+    .. ..
+
+3 地址重写的好处
+
+参考答案
+
+    缩短URL，隐藏实际路径提高安全性；
+    易于用户记忆和键入；
+    易于被搜索引擎收录。
+
+4 使用Nginx实现域名跳转
+
+要求：访问www.tarena.com时自动跳转至bbs.tarena.com
+
+参考答案
+
+    [root@nginx ~]# cat /usr/local/nginx/conf/nginx.conf
+    .. ..
+    server {
+            listen       80;
+            server_name  www.tarena.com;
+    location / {
+        root   html;
+    index  index.html index.htm;
+    rewrite ^/ http://bbs.tarena.com/;
+    }
+}
+
+
+
+03------------------------------------------------------------------------------------
+
+1 Nginx反向代理如何设置后端服务器组的状态
+
+Nginx可以设置后台服务器组主机的状态，在括号内填写下列不同状态的作用
+
+    down （ ）
+    max_fails （ ）
+    fail_timeout （ ）
+    backup （ ）
+
+参考答案
+
+    down：表示当前server暂时不参与负载
+    max_fails：允许请求失败的次数（默认为1）
+    fail_timeout ：max_fails次失败后，暂停提供服务的时间
+    backup：备份服务器
+
+2 Nginx实现TCP/UDP调度需要什么模块
+
+参考答案
+
+需要ngx_stream_core_module模块，使用--with-stream可以开启该模块。
+3 如何优化提升Nginx并发数量
+
+参考答案
+
+    [root@nginx ~]# vim /usr/local/nginx/nginx.conf
+    .. ..
+    events {
+    worker_connections 65535;                //每个worker最大并发连接数
+    use epoll;
+    }
+    [root@nginx ~]# vim /etc/security/limits.conf
+    .. ..
+    *             soft    nofile  100000
+    *             hard    nofile  100000
+
+4 如何使用ab对Web服务器进行压力测试
+
+要求：并发数为1024，总请求数为2048，测试页面为http://www.tarena.com/
+
+参考答案
+
+    [root@localhost ~]# ab -c 2048 –n 1024 http://www.tarena.com/
+
+5 使用Nginx如何自定义404错误页面
+
+参考答案
+
+    [root@nginx ~]# vim /usr/local/nginx/conf/nginx.conf
+    .. ..
+    http {
+    fastcgi_intercept_errors on;         //错误页面重定向
+    server {
+    error_page   404  /40x.html;        //自定义404错误页面
+            location = /40x.html {
+                root   html;
+            }
+    error_page   500 502 503 504  /50x.html;
+            location = /50x.html {
+                root   html;
+            }
+    }
+    }
+
+
+04------------------------------------------------------------------------------
+
+1 简述什么是memcached
+
+参考答案
+
+    memcached是高性能的分布式缓存服务器，是一个跨平台的、开源的实现分布式缓存服务的软件
+    用来集中缓存数据库查询结果，减少数据库访问次数，以提高动态Web应用的响应速度
+    memcached支持许多平台：Linux、FreeBSD、Solaris (memcached 1.2.5以上版本)、Mac OS X、Windows
+
+2 PHP的Session会话共享
+
+要求：PHP通过memcached实现Session会话共享，修改哪儿文件如何修改？
+
+参考答案
+
+    vim  /etc/php-fpm.d/www.conf
+    修改前:
+    php_value[session.save_handler] = files
+    php_value[session.save_path] = /var/lib/php/session
+    修改后
+    php_value[session.save_handler] = memcache
+    php_value[session.save_path] = "tcp://192.168.2.5:11211" 
+
+
+05-------------------------------------------------------------------------------------
+
+
+1 哪些参数影响了Tomcat部署网站时的路径
+
+参考答案
+
+appBase，docBase，path。
+2 使用keytool生成密钥文件的命令是什么？
+
+参考答案
+
+    [root@localhost ~]keytool -genkeypair -alias tomcat -keyalg RSA \
+    > -keystore /usr/local/tomcat/keystore
+
+3 代理软件的功能
+
+参考答案
+
+Web访问加速；
+
+IP伪装、“翻墙”。
+4 Varnish有哪些优势
+
+参考答案
+
+Varnish是一款高性能且开源的反向代理服务器和http加速器。
+
+Varnish具有性能更高、速度更快、管理更方便等诸多优点。
+
+
+06--------------------------------------------------------------------------
+
+1 什么是git
+
+参考答案
+
+git是一个自由，开源的分布式版本控制系统。在git管理下，文件和目录可以超越时空。git将文件存放在版本库里。它可以记录每一次文件和目录的修改情况，这样就可以籍此将数据恢复到以前的版本，并可以查看数据的更改细节。
+2 客户端与git服务器通信的方式有哪些
+
+参考答案
+
+    本地访问 git clone file:///var/git/project
+    ssh服务器方式访问 git clone root@服务器IP:/var/git/project
+    git服务器方式访问 git clone git://服务器IP/var/git/project
+    web服务的方式 firefox http://服务器IP/git
+
+3 Git移动HEAD指针的命令是什么
+
+参考答案
+
+    git reset --hard 版本编号
+
+4 Git如何创建并切换分支
+
+参考答案
+
+    创建分支：git branch 分支名称
+    切换分支：git checkout 分支名称
+
+5 Centos系统中使用什么工具可以打包RPM包
+
+参考答案
+
+    rpm-build工具
+
+
+07-------------------------------------------------------
+
+
+1 列出常见的VPN技术？
+
+参考答案
+
+GRE、PPTP、L2TP+IPSEc、SSL VPN。
+2 PPTP使用什么进行数据加密？
+
+参考答案
+
+MPPEP支持MPPE(Microsoft Point-to-Point Encryption)加密
+3 简述NTP协议的功能？
+
+参考答案
+
+Network Time Protocol是网络时间协议，它用来同步网络中各个计算机的时间的协议，她采用的是Stratum（分层设计），Stratum层的总数限制在15以内。
+4 RHEL7系统中使用什么工具提供了NTP服务器与客户端的功能？
+
+参考答案
+
+    chrony
+
+
